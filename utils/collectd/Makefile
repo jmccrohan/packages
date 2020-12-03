@@ -38,7 +38,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	cgroups \
 	cpusleep \
 	curl_jolokia \
-	curl_json \
 	curl_xml \
 	dbi \
 	dcpmm \
@@ -143,6 +142,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	cpufreq \
 	csv \
 	curl \
+	curl_json \
 	df \
 	disk \
 	dns \
@@ -247,7 +247,6 @@ CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
-	--with-libyajl=no \
 	--without-perl-bindings \
 	--without-libudev
 
@@ -259,6 +258,14 @@ CONFIGURE_VARS+= \
 ifneq ($(CONFIG_PACKAGE_collectd-mod-lua),)
 CONFIGURE_VARS+= \
 	LDFLAGS="$$$$LDFLAGS -llua"
+endif
+
+ifneq ($(CONFIG_PACKAGE_collectd-mod-curl-json),)
+CONFIGURE_ARGS+= \
+	--with-libyajl=$(STAGING_DIR)/usr
+else
+CONFIGURE_ARGS+= \
+	--with-libyajl=no
 endif
 
 ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
@@ -406,6 +413,7 @@ $(eval $(call BuildPlugin,cpu,CPU input,cpu,))
 $(eval $(call BuildPlugin,cpufreq,CPU Freq input,cpufreq,@(TARGET_x86||TARGET_x86_64||TARGET_mvebu||TARGET_ipq806x||TARGET_armvirt||TARGET_ipq40xx||TARGET_bcm27xx_bcm2709))) # Only enable on targets with CPUs supporting frequency scaling
 $(eval $(call BuildPlugin,csv,CSV output,csv,))
 $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcurl))
+$(eval $(call BuildPlugin,curl-json,cURL input with JSON parsing support,curl_json,+PACKAGE_collectd-mod-curl-json:libcurl +PACKAGE_collectd-mod-curl-json:yajl))
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
 $(eval $(call BuildPlugin,df,disk space input,df,))
 $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
@@ -464,6 +472,6 @@ $(eval $(call BuildPlugin,users,user logged in status input,users,))
 $(eval $(call BuildPlugin,vmem,virtual memory usage input,vmem,))
 $(eval $(call BuildPlugin,wireless,wireless status input,wireless,))
 $(eval $(call BuildPlugin,write-graphite,Carbon/Graphite output,write_graphite,+PACKAGE_collectd-mod-write-graphite:libpthread))
-$(eval $(call BuildPlugin,write-http,HTTP POST output,write_http,+PACKAGE_collectd-mod-write-http:libcurl))
+$(eval $(call BuildPlugin,write-http,HTTP POST output,write_http,+PACKAGE_collectd-mod-write-http:libcurl +PACKAGE_collectd-mod-curl-json:yajl))
 
 $(eval $(call BuildScriptPlugin,sqm,SQM/qdisc collection,sqm_collectd,+PACKAGE_collectd-mod-sqm:collectd-mod-exec))
